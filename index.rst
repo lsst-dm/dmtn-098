@@ -6,14 +6,6 @@
 
 .. sectnum::
 
-.. TODO: Delete the note below before merging new content to the master branch.
-
-.. note::
-
-   **This technote is not yet published.**
-
-   A design proposal for managing and collecting metrics-related code in the LSST Science Pipelines
-
 .. _overview:
 
 Overview
