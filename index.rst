@@ -97,19 +97,19 @@ Abstract Members
     Supporting processing of multiple datasets together lets metrics be defined with a different granularity from the Science Pipelines processing, and allows for the aggregation (or lack thereof) of the metric to be controlled by the task configuration with no code changes.
     Note that if ``QAWG-REC-32`` is implemented, then the input data will typically be a list of one item.
 
-``adaptArgsAndRun(inputData: dict, inputDataIds: dict, outputDataIds: dict) : lsst.pipe.base.Struct``
+``adaptArgsAndRun(inputData: dict, inputDataIds: dict, outputDataId: dict) : lsst.pipe.base.Struct``
     The default implementation of this method shall be equivalent to calling ``PipelineTask.adaptArgsAndRun``, followed by calling ``addStandardMetadata`` on the result.
     Subclasses may override ``adaptArgsAndRun``, but are then responsible for calling ``addStandardMetadata`` themselves.
 
-    ``outputDataIds`` shall contain a single mapping from ``"measurement"`` to exactly one data ID.
+    ``outputDataId`` shall contain a single mapping from ``"measurement"`` to exactly one data ID.
     The method's return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
 
     Behavior requirements as for ``run``.
 
-``getInputDatasetTypes(config: self.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
+``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
     While required by the ``PipelineTask`` API, this method will also be used by pre-``PipelineTask`` code to identify the (Butler Gen 2) inputs to the ``MetricTask``.
 
-``getOutputMetric(config: self.ConfigClass) : lsst.verify.MetricName``
+``getOutputMetric(config: cls.ConfigClass) : lsst.verify.Name``
     A class method returning the metric calculated by this object.
     May be configurable to allow one implementation class to calculate families of related metrics.
 
@@ -125,7 +125,7 @@ Concrete Members
     This is an unfortunately inflexible solution to the problem of adding client-mandated metadata keys.
     However, it is not clear whether any such keys will still be needed after the transition to Butler Gen 3 (see `SQR-019`_ and `DMTN-085`_), and any solution that controls the metadata using the task configuration would require independently configuring every single ``MetricTask``.
 
-``getOutputDatasetTypes(config: self.ConfigClass) : dict from str to DatasetTypeDescriptor``
+``getOutputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor``
     This method may need to be overridden to reflect Butler persistence of :class:`lsst.verify.Measurement` objects.
     It is not necessary in the initial implementation.
 
@@ -150,7 +150,7 @@ It is better that such metrics inherit from ``MetricTask`` directly than to try 
 Abstract Members
 ^^^^^^^^^^^^^^^^
 
-``getInputMetadataKey(config: self.ConfigClass) : str``
+``getInputMetadataKey(config: cls.ConfigClass) : str``
     Shall name the key containing the metric information, with optional task prefixes following the conventions of :meth:`lsst.pipe.base.Task.getFullMetadata`.
     The name may be an incomplete key in order to match an arbitrary top-level task or an unnecessarily detailed key name.
     May be configurable to allow one implementation class to calculate families of related metrics.
@@ -168,7 +168,7 @@ Concrete Members
     It shall look up keys partially matching ``getInputMetadataKey`` and make a single call to ``makeMeasurement`` with the values of the keys.
     Behavior when keys are present in some metadata objects but not others is TBD.
 
-``getInputDatasetTypes(config: self.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
+``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
     This method shall return a single mapping from ``"metadata"`` to the dataset type of the top-level data processing task's metadata.
     The identity of the top-level task shall be extracted from the ``MetricTask``'s config.
 
@@ -206,7 +206,7 @@ Abstract Members
 Concrete Members
 ^^^^^^^^^^^^^^^^
 
-``adaptArgsAndRun(dbInfo: dict from str to any, inputDataIds: unused, outputDataIds: dict from str to DataId) : lsst.pipe.base.Struct``
+``adaptArgsAndRun(dbInfo: dict from str to any, inputDataIds: unused, outputDataId: dict from str to DataId) : lsst.pipe.base.Struct``
     This method shall load the database using ``dbLoader`` before calling ``makeMeasurement``.
     ``PpdbMetricTask`` overrides ``adaptArgsAndRun`` in order to support fine-grained metrics: while a repository should have only one prompt products database, metrics may wish to examine subsets grouped by visit, CCD, etc., and if so these details must be passed to ``makeMeasurement``.
 
@@ -216,7 +216,7 @@ Concrete Members
     This method shall be a simplified version of ``adaptArgsAndRun`` for use before ``PipelineTask`` is ready.
     Its behavior shall be equivalent to ``adaptArgsAndRun`` called with empty data IDs.
 
-``getInputDatasetTypes(config: self.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
+``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
     This method shall return a single mapping from ``"dbInfo"`` to a suitable dataset type: either the type of the top-level data processing task's config, or some future type specifically designed for database support.
 
 
