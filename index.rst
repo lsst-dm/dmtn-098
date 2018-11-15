@@ -59,13 +59,10 @@ Primary Components
 The framework creates :class:`lsst.pipe.base.PipelineTask` subclasses responsible for measuring metrics and constructing :class:`lsst.verify.Measurement` objects.
 Metrics-measuring tasks (hereafter ``MetricTasks``) will be added to data processing pipelines, and the ``PipelineTask`` framework will be responsible for scheduling metrics computation and collecting the results.
 It is expected that ``PipelineTask`` will provide some mechanism for grouping tasks together (e.g., sub-pipelines), which will make it easier to enable and configure large groups of metrics.
+``PipelineTask`` is not available for general use at the time of writing, so initial implementations may need to avoid referring to its API directly (see the :ref:`Butler Gen 2 MetricTask <components-compatibility-metrictask>`).
 
 Because ``MetricTasks`` are handled separately from data processing tasks, the latter can be run without needing to know about or configure metrics.
 Metrics that *must* be calculated while the pipeline is running may be integrated into pipeline tasks as subtasks, with the measurement(s) being added to the list of pipeline task outputs, but doing so greatly reduces the flexibility of the framework and is not recommended.
-
-``PipelineTask`` is not available for general use at the time of writing, so initial implementations may need to avoid referring to its API directly.
-Any such substitutions will be marked in square brackets and the word "initially".
-If a practical adapter cannot be developed (see :ref:`components-compatibility`), these substitutions may be implemented as differently-named methods in order to simultaneously support ``PipelineTask`` and non-``PipelineTask`` execution in the same class.
 
 :ref:`For illustration <fig-classes>` all ``MetricTask`` classes are shown as members of a single ``verify_measurements`` package.
 However, this is not required by the framework; subclasses of ``MetricTask`` may be defined in the packages of the task they instrument, or in plugin packages similar to ``meas_extensions_*``.
@@ -76,7 +73,7 @@ The framework is therefore compatible with any future policy decisions concernin
 MetricTask
 ----------
 
-The code to compute any metric shall be a subclass of ``MetricTask``, a :class:`~lsst.pipe.base.PipelineTask` [initially :class:`~lsst.pipe.base.Task`] specialized for metrics.
+The code to compute any metric shall be a subclass of ``MetricTask``, a :class:`~lsst.pipe.base.PipelineTask` specialized for metrics.
 Each ``MetricTask`` shall read the necessary data from a repository, and produce a :class:`lsst.verify.Measurement` of the corresponding metric.
 Measurements may be associated with particular quanta or data IDs, or they may be repository-wide.
 
@@ -97,15 +94,6 @@ Abstract Members
     Supporting processing of multiple datasets together lets metrics be defined with a different granularity from the Science Pipelines processing, and allows for the aggregation (or lack thereof) of the metric to be controlled by the task configuration with no code changes.
     Note that if ``QAWG-REC-32`` is implemented, then the input data will typically be a list of one item.
 
-``adaptArgsAndRun(inputData: dict, inputDataIds: dict, outputDataId: dict) : lsst.pipe.base.Struct``
-    The default implementation of this method shall be equivalent to calling ``PipelineTask.adaptArgsAndRun``, followed by calling ``addStandardMetadata`` on the result.
-    Subclasses may override ``adaptArgsAndRun``, but are then responsible for calling ``addStandardMetadata`` themselves.
-
-    ``outputDataId`` shall contain a single mapping from ``"measurement"`` to exactly one data ID.
-    The method's return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
-
-    Behavior requirements as for ``run``.
-
 ``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
     While required by the ``PipelineTask`` API, this method will also be used by pre-``PipelineTask`` code to identify the (Butler Gen 2) inputs to the ``MetricTask``.
 
@@ -118,20 +106,11 @@ Abstract Members
 Concrete Members
 ^^^^^^^^^^^^^^^^
 
-``addStandardMetadata(measurement: lsst.verify.Measurement, outputDataId: dict)``
-    This method shall add the output data ID to the ``Measurement's`` metadata under the key "dataId", and may add other metadata agreed to be of universal use (both across metrics and across clients, including but not limited to SQuaSH), breaking the method API if necessary.
-    This method shall not add common information such as the execution environment (which is the responsibility of the ``MetricTask``'s caller) or information specific to a particular metric (which is the responsibility of the corresponding class).
-
-    This is an unfortunately inflexible solution to the problem of adding client-mandated metadata keys.
-    However, it is not clear whether any such keys will still be needed after the transition to Butler Gen 3 (see `SQR-019`_ and `DMTN-085`_), and any solution that controls the metadata using the task configuration would require independently configuring every single ``MetricTask``.
-
 ``getOutputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor``
-    This method may need to be overridden to reflect Butler persistence of :class:`lsst.verify.Measurement` objects.
-    It is not necessary in the initial implementation.
+    This method may need to be overridden to reflect Butler persistence of :class:`lsst.verify.Measurement` objects, if individual objects are not supported as a persistable dataset.
 
 ``saveStruct(lsst.pipe.base.Struct, outputDataRefs: dict, butler: lsst.daf.butler.Butler)``
-    This method may need to be overridden to support Butler persistence of :class:`lsst.verify.Measurement` objects.
-    It is not necessary in the initial implementation.
+    This method may need to be overridden to support Butler persistence of :class:`lsst.verify.Measurement` objects, if individual objects are not supported as a persistable dataset
 
 
 .. _components-primary-metadatametrictask:
@@ -168,7 +147,7 @@ Concrete Members
     It shall look up keys partially matching ``getInputMetadataKey`` and make a single call to ``makeMeasurement`` with the values of the keys.
     Behavior when keys are present in some metadata objects but not others is TBD.
 
-``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
+``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor``
     This method shall return a single mapping from ``"metadata"`` to the dataset type of the top-level data processing task's metadata.
     The identity of the top-level task shall be extracted from the ``MetricTask``'s config.
 
@@ -216,7 +195,7 @@ Concrete Members
     This method shall be a simplified version of ``adaptArgsAndRun`` for use before ``PipelineTask`` is ready.
     Its behavior shall be equivalent to ``adaptArgsAndRun`` called with empty data IDs.
 
-``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
+``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor``
     This method shall return a single mapping from ``"dbInfo"`` to a suitable dataset type: either the type of the top-level data processing task's config, or some future type specifically designed for database support.
 
 
@@ -232,6 +211,56 @@ By far the best way to simultaneously deal with the incompatible Butler 2 and Bu
 Unfortunately, the design of such an adapter is complicated by the strict requirements on :class:`~lsst.pipe.base.PipelineTask` constructor signatures and the use of configs as a :class:`~lsst.pipe.base.Task`'s primary API.
 
 I suspect that both problems may be solved by applying a decorator to the appropriate :class:`type` objects rather than using a conventional class or object adapter\ :cite:`book:patterns` for :class:`~lsst.pipe.base.Task` or :class:`~lsst.pex.config.Config` objects, but the design of such an decorator is best addressed separately.
+
+.. _components-compatibility-metrictask:
+
+MetricTask
+----------
+
+This ``MetricTask`` shall be a subclass of :class:`~lsst.pipe.base.Task` that has a :class:`~lsst.pipe.base.PipelineTask`-like interface but does not depend on any Butler Gen 3 components. Concrete ``MetricTasks`` will implement this interface before ``PipelineTask`` is available, and can be migrated individually afterward (possibly through a formal deprecation procedure, if ``MetricTask`` is used widely enough to make it necessary).
+
+.. _components-compatibility-metrictask-abstract:
+
+Abstract Members
+^^^^^^^^^^^^^^^^
+
+``run(undefined) : lsst.pipe.base.Struct``
+    Subclasses may provide a ``run`` method, which should take multiple datasets of a given type.
+    Its return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
+
+    ``MetricTask`` shall do nothing (returning ``None`` in place of a :class:`~lsst.verify.Measurement`) if the data it needs are not available.
+    Behavior when the data are available for some quanta but not others is TBD.
+
+    Supporting processing of multiple datasets together lets metrics be defined with a different granularity from the Science Pipelines processing, and allows for the aggregation (or lack thereof) of the metric to be controlled by the task configuration with no code changes.
+    Note that if ``QAWG-REC-32`` is implemented, then the input data will typically be a list of one item.
+
+``adaptArgsAndRun(inputData: dict, inputDataIds: dict, outputDataId: dict) : lsst.pipe.base.Struct``
+    The default implementation of this method shall be equivalent to calling ``PipelineTask.adaptArgsAndRun``, followed by calling ``addStandardMetadata`` on the result.
+    Subclasses may override ``adaptArgsAndRun``, but are then responsible for calling ``addStandardMetadata`` themselves.
+
+    ``outputDataId`` shall contain a single mapping from ``"measurement"`` to exactly one data ID.
+    The method's return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
+
+    Behavior requirements as for ``run``.
+
+``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to str``
+    This method shall identify the Butler Gen 2 inputs to the ``MetricTask``.
+
+``getOutputMetric(config: cls.ConfigClass) : lsst.verify.Name``
+    A class method returning the metric calculated by this object.
+    May be configurable to allow one implementation class to calculate families of related metrics.
+
+.. _components-compatibility-metrictask-concrete:
+
+Concrete Members
+^^^^^^^^^^^^^^^^
+
+``addStandardMetadata(measurement: lsst.verify.Measurement, outputDataId: dict)``
+    This method shall add the output data ID to the ``Measurement's`` metadata under the key "dataId", and may add other metadata agreed to be of universal use (both across metrics and across clients, including but not limited to SQuaSH), breaking the method API if necessary.
+    This method shall not add common information such as the execution environment (which is the responsibility of the ``MetricTask``'s caller) or information specific to a particular metric (which is the responsibility of the corresponding class).
+
+    This is an unfortunately inflexible solution to the problem of adding client-mandated metadata keys.
+    However, it is not clear whether any such keys will still be needed after the transition to Butler Gen 3 (see `SQR-019`_ and `DMTN-085`_), and any solution that controls the metadata using the task configuration would require independently configuring every single ``MetricTask``.
 
 .. _components-compatibility-metricscontrollertask:
 
