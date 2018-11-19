@@ -231,7 +231,7 @@ Therefore, the initial framework will include extra classes that allow ``MetricT
 By far the best way to simultaneously deal with the incompatible Butler 2 and Butler 3 APIs would be an adapter class that allows ``MetricTask`` classes initially written without ``PipelineTask`` support to serve as :class:`lsst.pipe.base.PipelineTask`.
 Unfortunately, the design of such an adapter is complicated by the strict requirements on :class:`~lsst.pipe.base.PipelineTask` constructor signatures and the use of configs as a :class:`~lsst.pipe.base.Task`'s primary API.
 
-I suspect that both problems may be solved by applying a decorator to the appropriate :class:`type` objects rather than using a conventional class or object adapter for :class:`~lsst.pipe.base.Task` or :class:`~lsst.pex.config.Config` objects, but the design of such an decorator is best addressed separately.
+I suspect that both problems may be solved by applying a decorator to the appropriate :class:`type` objects rather than using a conventional class or object adapter\ :cite:`book:patterns` for :class:`~lsst.pipe.base.Task` or :class:`~lsst.pex.config.Config` objects, but the design of such an decorator is best addressed separately.
 
 .. _components-compatibility-metricscontrollertask:
 
@@ -294,7 +294,12 @@ register
 
     This decorator can be phased out once ``MetricsControllerTask`` is retired.
 
-.. De facto bibliography
+.. rubric:: References
+
+.. Make in-text citations with: :cite:`bibkey`.
+
+.. bibliography:: local.bib lsstbib/books.bib lsstbib/lsst.bib lsstbib/lsst-dm.bib lsstbib/refs.bib lsstbib/refs_ads.bib
+   :style: lsst_aa
 
 .. _SQR-019: https://sqr-019.lsst.io/
 
