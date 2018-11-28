@@ -256,7 +256,7 @@ Concrete Members
 ^^^^^^^^^^^^^^^^
 
 ``addStandardMetadata(measurement: lsst.verify.Measurement, outputDataId: dict)``
-    This method shall add the output data ID to the ``Measurement's`` metadata under the key "dataId", and may add other metadata agreed to be of universal use (both across metrics and across clients, including but not limited to SQuaSH), breaking the method API if necessary.
+    This method may add measurement-specific metadata agreed to be of universal use (both across metrics and across clients, including but not limited to SQuaSH), breaking the method API if necessary.
     This method shall not add common information such as the execution environment (which is the responsibility of the ``MetricTask``'s caller) or information specific to a particular metric (which is the responsibility of the corresponding class).
 
     This is an unfortunately inflexible solution to the problem of adding client-mandated metadata keys.
@@ -273,14 +273,17 @@ The ``MetricTask`` instances to be executed shall *not* be treated as subtasks, 
 ``MetricsControllerTask`` shall ignore any configuration in a ``MetricTask`` giving its metric a specific level of granularity; the granularity shall instead be inferred from ``MetricsControllerTask`` inputs.
 In addition, ``MetricsControllerTask`` will not support metrics that depend on other metrics.
 
+Some existing frameworks (i.e., :py:mod:`lsst.ap.verify` and :py:mod:`lsst.jointcal`) store metrics computed by a task as part of one or more :py:class:`lsst.verify.Job` objects.
+``MetricsControllerTask`` will not be able to work with such jobs, but will not preempt them, either -- they can continue to record metrics that are not managed by ``MetricsControllerTask``.
+
 .. _components-compatibility-metricscontrollertask-concrete:
 
 Concrete Members
 ^^^^^^^^^^^^^^^^
 
-``runDataRefs(datarefs: iterable of lsst.daf.persistence.ButlerDataRef) : lsst.pipe.base.Struct``
-    This method shall, for each configured ``MetricTask`` and each ``dataref``, load the metric's input dataset(s) and pass them to the task (via ``adaptArgsAndRun``), collecting the resulting ``Measurement`` objects and persisting them to a configuration-specified file.
-    The return value shall contain a field, ``job``, mapping to a :class:`lsst.verify.Job` containing the measurements.
+``runDataRefs(datarefs: list of lsst.daf.persistence.ButlerDataRef) : lsst.pipe.base.Struct``
+    This method shall, for each configured ``MetricTask`` and each ``dataref``, load the metric's input dataset(s) and pass them to the task (via ``adaptArgsAndRun``), collecting the resulting ``Measurement`` objects and persisting them to configuration-specified files.
+    The return value shall contain a field, ``jobs``, mapping to a list of :class:`lsst.verify.Job`, one for each dataref, containing the measurements.
 
     The granularity of each ``dataref`` shall define the granularity of the corresponding measurement, and must be the same as or coarser than the granularity of each ``MetricTask's`` input data.
     The safest way to support metrics of different granularities is to handle each granularity with an independently configured ``MetricsControllerTask`` object.
