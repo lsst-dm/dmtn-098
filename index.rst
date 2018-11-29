@@ -88,7 +88,7 @@ Abstract Members
     Subclasses may provide a ``run`` method, which should take multiple datasets of a given type.
     Its return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
 
-    ``MetricTask`` shall do nothing (returning ``None`` in place of a :class:`~lsst.verify.Measurement`) if the data it needs are not available.
+    ``MetricTask`` shall do nothing (returning :py:const:`None` in place of a :class:`~lsst.verify.Measurement`) if the data it needs are not available.
     Behavior when the data are available for some quanta but not others is TBD.
 
     Supporting processing of multiple datasets together lets metrics be defined with a different granularity from the Science Pipelines processing, and allows for the aggregation (or lack thereof) of the metric to be controlled by the task configuration with no code changes.
@@ -198,6 +198,15 @@ Concrete Members
 ``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor``
     This method shall return a single mapping from ``"dbInfo"`` to a suitable dataset type: either the type of the top-level data processing task's config, or some future type specifically designed for database support.
 
+.. _components-primary-metriccomputationerror:
+
+MetricComputationError
+----------------------
+
+This subclass of :py:class:`RuntimeError` may be raised by ``MetricTask`` to indicate that a metric could not be computed due to algorithmic or system issues.
+It is provided to let higher-level code distinguish failures in the metrics framework from failures in the pipeline code.
+
+Note that being unable to compute a metric due to *insufficient* input data is not considered a failure, and in such a case ``MetricTask`` should return :py:const:`None` instead of raising an exception.
 
 .. _components-compatibility:
 
@@ -228,7 +237,7 @@ Abstract Members
     Subclasses may provide a ``run`` method, which should take multiple datasets of a given type.
     Its return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
 
-    ``MetricTask`` shall do nothing (returning ``None`` in place of a :class:`~lsst.verify.Measurement`) if the data it needs are not available.
+    ``MetricTask`` shall do nothing (returning :py:const:`None` in place of a :class:`~lsst.verify.Measurement`) if the data it needs are not available.
     Behavior when the data are available for some quanta but not others is TBD.
 
     Supporting processing of multiple datasets together lets metrics be defined with a different granularity from the Science Pipelines processing, and allows for the aggregation (or lack thereof) of the metric to be controlled by the task configuration with no code changes.
