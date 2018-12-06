@@ -12,8 +12,8 @@ Overview
 ========
 
 The :mod:`lsst.verify` package provides a framework for characterizing the LSST Science Pipelines through specific metrics, which are configured by the ``verify_metrics`` package.
-However, :mod:`lsst.verify` does not specify how to organize the code that measures and stores the metrics.
-This document proposes a new framework that interacts with the :mod:`lsst.verify` and Task frameworks to make it easy to write new metrics and apply them to the Science Pipelines.
+However, :mod:`lsst.verify` does not yet specify how to organize the code that measures and stores the metrics.
+This document proposes an extension of :mod:`lsst.verify` that interacts with the Task framework to make it easy to write new metrics and apply them to the Science Pipelines.
 
 The proposed design, :ref:`shown below <fig-classes>`, is similar to the `make measurements from output datasets <https://dmtn-057.lsst.io/#option-make-measurements-from-output-datasets>`_ option proposed in DMTN-057.
 Each metric will have an associated :class:`lsst.pipe.base.Task` class that is responsible for measuring it based on data previously written to a Butler repository.
@@ -64,8 +64,8 @@ It is expected that ``PipelineTask`` will provide some mechanism for grouping ta
 Because ``MetricTasks`` are handled separately from data processing tasks, the latter can be run without needing to know about or configure metrics.
 Metrics that *must* be calculated while the pipeline is running may be integrated into pipeline tasks as subtasks, with the measurement(s) being added to the list of pipeline task outputs, but doing so greatly reduces the flexibility of the framework and is not recommended.
 
-:ref:`For illustration <fig-classes>` all ``MetricTask`` classes are shown as members of a single ``verify_measurements`` package.
-However, this is not required by the framework; subclasses of ``MetricTask`` may be defined in the packages of the task they instrument, or in plugin packages similar to ``meas_extensions_*``.
+While this proposal places ``MetricTask`` and its supporting classes in :mod:`lsst.verify` (see :ref:`Figure 1 <fig-classes>`), its subclasses can go in any package that can depend on both :mod:`lsst.verify` and :mod:`lsst.pipe.base`.
+For example, subclasses of ``MetricTask`` may be defined in the packages of the task they instrument, in plugin packages similar to ``meas_extensions_*``, or in a dedicated pipeline verification package.
 The framework is therefore compatible with any future policy decisions concerning metric implementations.
 
 .. _components-primary-metrictask:
