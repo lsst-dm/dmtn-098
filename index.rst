@@ -305,7 +305,7 @@ Concrete Members
 
 ``metadataAdder: lsst.pipe.base.Task``
     A subtask responsible for adding Job-level metadata required by a particular client (e.g., SQuaSH).
-    Its ``run`` method must accept a :class:`lsst.verify.Job` object and return a :class:`lsst.pipe.base.Struct` whose ``job`` field maps to a modified :class:`~lsst.verify.Job`.
+    Its ``run`` method must accept a :class:`lsst.verify.Job` object followed by arbitrary keyword arguments, and return a :class:`lsst.pipe.base.Struct` whose ``job`` field maps to a modified :class:`~lsst.verify.Job`.
 
 .. _components-compatibility-makemeasurerregistry:
 
