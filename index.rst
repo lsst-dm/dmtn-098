@@ -27,7 +27,7 @@ However, the design does require that ``QAWG-REC-34`` ("Metric values should hav
    :target: _images/class_diagram.svg
    :name: fig-classes
 
-   Classes introduced in this design (blue), including a compatibility module for adapting the framework to a non-``PipelineTask`` system. For simplicity, ``Task`` config classes are treated as part of the corresponding ``Task``.
+   Classes introduced in this design (blue), including a compatibility module for adapting the framework to the Gen 2 tasks framework. For simplicity, ``Task`` config classes are treated as part of the corresponding ``Task``.
 
 
 .. _design-goals:
@@ -59,7 +59,7 @@ Primary Components
 The framework creates :class:`lsst.pipe.base.PipelineTask` subclasses responsible for measuring metrics and constructing :class:`lsst.verify.Measurement` objects.
 Metrics-measuring tasks (hereafter ``MetricTasks``) will be added to data processing pipelines, and the ``PipelineTask`` framework will be responsible for scheduling metrics computation and collecting the results.
 It is expected that ``PipelineTask`` will provide some mechanism for grouping tasks together (e.g., sub-pipelines), which will make it easier to enable and configure large groups of metrics.
-``PipelineTask`` is not available for general use at the time of writing, so initial implementations may need to avoid referring to its API directly (see the :ref:`Butler Gen 2 MetricTask <components-compatibility-metrictask>`).
+``PipelineTask`` is not available for general use at the time of writing, so initial implementations may need to avoid referring to its API directly (see the :ref:`Butler Gen 2 MetricTask <components-gen2-metrictask>`).
 
 Because ``MetricTasks`` are handled separately from data processing tasks, the latter can be run without needing to know about or configure metrics.
 Metrics that *must* be calculated while the pipeline is running may be integrated into pipeline tasks as subtasks, with the measurement(s) being added to the list of pipeline task outputs, but doing so greatly reduces the flexibility of the framework and is not recommended.
@@ -208,10 +208,10 @@ It is provided to let higher-level code distinguish failures in the metrics fram
 
 Note that being unable to compute a metric due to *insufficient* input data is not considered a failure, and in such a case ``MetricTask`` should return :py:const:`None` instead of raising an exception.
 
-.. _components-compatibility:
+.. _components-gen2:
 
-Compatibility Components
-========================
+Gen 2 Compatibility Components
+==============================
 
 We expect to deploy new metrics before ``PipelineTask`` is ready for general use.
 Therefore, the initial framework will include extra classes that allow ``MetricTask`` to function without ``PipelineTask`` features.
@@ -221,14 +221,14 @@ Unfortunately, the design of such an adapter is complicated by the strict requir
 
 I suspect that both problems may be solved by applying a decorator to the appropriate :class:`type` objects rather than using a conventional class or object adapter\ :cite:`book:patterns` for :class:`~lsst.pipe.base.Task` or :class:`~lsst.pex.config.Config` objects, but the design of such an decorator is best addressed separately.
 
-.. _components-compatibility-metrictask:
+.. _components-gen2-metrictask:
 
 MetricTask
 ----------
 
 This ``MetricTask`` shall be a subclass of :class:`~lsst.pipe.base.Task` that has a :class:`~lsst.pipe.base.PipelineTask`-like interface but does not depend on any Butler Gen 3 components. Concrete ``MetricTasks`` will implement this interface before ``PipelineTask`` is available, and can be migrated individually afterward (possibly through a formal deprecation procedure, if ``MetricTask`` is used widely enough to make it necessary).
 
-.. _components-compatibility-metrictask-abstract:
+.. _components-gen2-metrictask-abstract:
 
 Abstract Members
 ^^^^^^^^^^^^^^^^
@@ -259,7 +259,7 @@ Abstract Members
     A class method returning the metric calculated by this object.
     May be configurable to allow one implementation class to calculate families of related metrics.
 
-.. _components-compatibility-metrictask-concrete:
+.. _components-gen2-metrictask-concrete:
 
 Concrete Members
 ^^^^^^^^^^^^^^^^
@@ -271,7 +271,7 @@ Concrete Members
     This is an unfortunately inflexible solution to the problem of adding client-mandated metadata keys.
     However, it is not clear whether any such keys will still be needed after the transition to Butler Gen 3 (see `SQR-019`_ and `DMTN-085`_), and any solution that controls the metadata using the task configuration would require independently configuring every single ``MetricTask``.
 
-.. _components-compatibility-metricscontrollertask:
+.. _components-gen2-metricscontrollertask:
 
 MetricsControllerTask
 ---------------------
@@ -285,7 +285,7 @@ In addition, ``MetricsControllerTask`` will not support metrics that depend on o
 Some existing frameworks (i.e., :py:mod:`lsst.ap.verify` and :py:mod:`lsst.jointcal`) store metrics computed by a task as part of one or more :py:class:`lsst.verify.Job` objects.
 ``MetricsControllerTask`` will not be able to work with such jobs, but will not preempt them, either -- they can continue to record metrics that are not managed by ``MetricsControllerTask``.
 
-.. _components-compatibility-metricscontrollertask-concrete:
+.. _components-gen2-metricscontrollertask-concrete:
 
 Concrete Members
 ^^^^^^^^^^^^^^^^
@@ -307,7 +307,7 @@ Concrete Members
     A subtask responsible for adding Job-level metadata required by a particular client (e.g., SQuaSH).
     Its ``run`` method must accept a :class:`lsst.verify.Job` object followed by arbitrary keyword arguments, and return a :class:`lsst.pipe.base.Struct` whose ``job`` field maps to a modified :class:`~lsst.verify.Job`.
 
-.. _components-compatibility-makemeasurerregistry:
+.. _components-gen2-makemeasurerregistry:
 
 MetricRegistry
 --------------
@@ -324,7 +324,7 @@ Concrete Members
     It should not require a custom subclass of :class:`lsst.pex.config.Registry`, but if the need arose, ``MetricRegistry`` could be easily turned into a singleton class.
 
 
-.. _components-compatibility-register:
+.. _components-gen2-register:
 
 register
 --------
