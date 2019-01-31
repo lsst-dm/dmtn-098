@@ -469,7 +469,7 @@
 <line clip-path="url(#clipPath29)" fill="none" x1="2143" x2="2143" y1="250" y2="707"/>
 <line clip-path="url(#clipPath29)" fill="none" x1="2143" x2="1343" y1="707" y2="707"/>
 <line clip-path="url(#clipPath29)" fill="none" x1="1343" x2="1343" y1="707" y2="223"/>
-<text x="1349" y="245" clip-path="url(#clipPath30)" stroke="none" xml:space="preserve">compatibility </text>
+<text x="1349" y="245" clip-path="url(#clipPath30)" stroke="none" xml:space="preserve">gen2tasks </text>
 <rect x="1703" y="587" clip-path="url(#clipPath31)" fill="url(#linearGradient6)" width="201" height="81" stroke="none"/>
 <text x="1741" y="609" clip-path="url(#clipPath32)" stroke="none" xml:space="preserve">MetricRegistry  </text>
 <text x="1709" y="633" clip-path="url(#clipPath33)" stroke="none" xml:space="preserve">  registry: Registry</text>
