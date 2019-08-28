@@ -85,14 +85,10 @@ Abstract Members
 ^^^^^^^^^^^^^^^^
 
 ``run(undefined) : lsst.pipe.base.Struct``
-    Subclasses may provide a ``run`` method, which should take multiple datasets of a given type.
+    Subclasses may provide a ``run`` method.
     Its return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
 
     ``MetricTask`` shall do nothing (returning :py:const:`None` in place of a :class:`~lsst.verify.Measurement`) if the data it needs are not available.
-    Behavior when the data are available for some quanta but not others is TBD.
-
-    Supporting processing of multiple datasets together lets metrics be defined with a different granularity from the Science Pipelines processing, and allows for the aggregation (or lack thereof) of the metric to be controlled by the task configuration with no code changes.
-    Note that if ``QAWG-REC-32`` is implemented, then the input data will typically be a list of one item.
 
 ``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor [initially str to str]``
     While required by the ``PipelineTask`` API, this method will also be used by pre-``PipelineTask`` code to identify the (Butler Gen 2) inputs to the ``MetricTask``.
@@ -131,7 +127,7 @@ Abstract Members
     The names may be incomplete keys in order to match an arbitrary top-level task or an unnecessarily detailed key names.
     May be configurable to allow one implementation class to calculate families of related metrics.
 
-``makeMeasurement(values: dict) : lsst.verify.Measurement``
+``makeMeasurement(values: dict or iterable) : lsst.verify.Measurement``
     A workhorse method that accepts the metadata values extracted from the metadata passed to ``run``.
 
 .. _components-primary-metadatametrictask-concrete:
@@ -139,10 +135,10 @@ Abstract Members
 Concrete Members
 ^^^^^^^^^^^^^^^^
 
-``run(metadata: iterable of lsst.daf.base.PropertySet) : lsst.pipe.base.Struct``
-    This method shall take multiple metadata objects (possibly all of them, depending on the granularity of the metric).
-    It shall look up keys partially matching ``getInputMetadataKey`` and make a single call to ``makeMeasurement`` with the values of the keys.
-    Behavior when keys are present in some metadata objects but not others is TBD.
+``run(metadata: lsst.daf.base.PropertySet or iterable) : lsst.pipe.base.Struct``
+    This method shall take one or more metadata objects.
+    Subclasses may require (via config) only single objects or only lists.
+    The method shall look up keys partially matching ``getInputMetadataKeys`` and make a single call to ``makeMeasurement`` with the values of the keys.
 
 ``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to DatasetTypeDescriptor``
     This method shall return a single mapping from ``"metadata"`` to the dataset type of the top-level data processing task's metadata.
@@ -231,14 +227,10 @@ Abstract Members
 ^^^^^^^^^^^^^^^^
 
 ``run(undefined) : lsst.pipe.base.Struct``
-    Subclasses may provide a ``run`` method, which should take multiple datasets of a given type.
+    Subclasses may provide a ``run`` method.
     Its return value must contain a field, ``measurement``, mapping to the resulting :class:`lsst.verify.Measurement`.
 
     ``MetricTask`` shall do nothing (returning :py:const:`None` in place of a :class:`~lsst.verify.Measurement`) if the data it needs are not available.
-    Behavior when the data are available for some quanta but not others is TBD.
-
-    Supporting processing of multiple datasets together lets metrics be defined with a different granularity from the Science Pipelines processing, and allows for the aggregation (or lack thereof) of the metric to be controlled by the task configuration with no code changes.
-    Note that if ``QAWG-REC-32`` is implemented, then the input data will typically be a list of one item.
 
 ``adaptArgsAndRun(inputData: dict, inputDataIds: dict, outputDataId: dict) : lsst.pipe.base.Struct``
     The default implementation of this method shall be equivalent to calling ``PipelineTask.adaptArgsAndRun``, followed by calling ``addStandardMetadata`` on the result.
@@ -251,6 +243,10 @@ Abstract Members
 
 ``getInputDatasetTypes(config: cls.ConfigClass) : dict from str to str``
     This method shall identify the Butler Gen 2 inputs to the ``MetricTask``.
+
+``areInputDatasetsScalar(config: cls.ConfigClass) : dict from str to bool``
+    This method shall identify whether each input can take one value or many.
+    Like the Gen 3 ``getInputDatasetTypes``, it returns a map keyed by the names of the inputs to ``run``.
 
 ``getOutputMetric(config: cls.ConfigClass) : lsst.verify.Name``
     A class method returning the metric calculated by this object.
