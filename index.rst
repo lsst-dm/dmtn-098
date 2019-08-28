@@ -115,26 +115,23 @@ Concrete Members
 
 .. _components-primary-metadatametrictask:
 
-SingleMetadataMetricTask
-------------------------
+MetadataMetricTask
+------------------
 
-This class shall simplify implementations of metrics that are calculated from a single key in the pipeline's output metadata.
+This class shall simplify implementations of metrics that are calculated from one or more keys in the pipeline's output metadata.
 The class shall provide the code needed to map a metadata key (possibly across multiple quanta) to a single metric.
-
-Based on the examples implemented in :mod:`lsst.ap.verify.measurements`, the process of calculating a metric from *multiple* metadata keys is considerably more complex.
-It is better that such metrics inherit from ``MetricTask`` directly than to try to provide generic support through a single class.
 
 .. _components-primary-metadatametrictask-abstract:
 
 Abstract Members
 ^^^^^^^^^^^^^^^^
 
-``getInputMetadataKey(config: cls.ConfigClass) : str``
-    Shall name the key containing the metric information, with optional task prefixes following the conventions of :meth:`lsst.pipe.base.Task.getFullMetadata`.
-    The name may be an incomplete key in order to match an arbitrary top-level task or an unnecessarily detailed key name.
+``getInputMetadataKeys(config: cls.ConfigClass) : dict``
+    Shall name the keys containing the metric information, with optional task prefixes following the conventions of :meth:`lsst.pipe.base.Task.getFullMetadata`.
+    The names may be incomplete keys in order to match an arbitrary top-level task or an unnecessarily detailed key names.
     May be configurable to allow one implementation class to calculate families of related metrics.
 
-``makeMeasurement(values: iterable of any) : lsst.verify.Measurement``
+``makeMeasurement(values: dict) : lsst.verify.Measurement``
     A workhorse method that accepts the metadata values extracted from the metadata passed to ``run``.
 
 .. _components-primary-metadatametrictask-concrete:
